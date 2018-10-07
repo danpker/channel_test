@@ -7,12 +7,18 @@ struct Message {
 }
 
 fn main() {
-    let (sender, receiver): (Sender<Message>, Receiver<Message>) = mpsc::channel();
+    // You don't need to give the data type if Rust can work it out
+    // let (sender, receiver): (Sender<Message>, Receiver<Message>) = mpsc::channel();
+    let (sender, receiver) = mpsc::channel();
 
+    // Need this pattern for the fn runOnce trait.
     thread::spawn(move || producer(sender));
+
+    // Run the consumer on the main tread so it doesn't exit early.
     consumer(receiver);
 }
 
+/// Continuously send messages, forever.
 fn producer(sender: Sender<Message>) {
     let mut counter: u64 = 0;
     loop {
@@ -22,6 +28,7 @@ fn producer(sender: Sender<Message>) {
     }
 }
 
+/// Continuously receive messages. If none are available, sleep to save CPU
 fn consumer(receiver: Receiver<Message>) {
     loop {
         match receiver.try_iter().next() {
